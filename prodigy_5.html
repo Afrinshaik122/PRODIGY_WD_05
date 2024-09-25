@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom right, #4fc3f7, #a7ffeb);
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        #weather-container {
+            border: 2px solid #009688;
+            padding: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+
+        h1 {
+            color: #00796b;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            border: 2px solid #00796b;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #ff9800;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #fb8c00;
+            transform: scale(1.05); /* Slight scale effect on hover */
+        }
+
+        h2 {
+            color: #555;
+            margin-bottom: 15px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        p {
+            color: #444;
+            margin-bottom: 8px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .visible {
+            opacity: 1;
+        }
+
+        #error-message {
+            color: #d32f2f;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        /* New Styles */
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #ff9800;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .weather-icon {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Weather App</h1>
+    <div id="weather-container">
+        <label for="location">Enter Location:</label>
+        <input type="text" id="location" placeholder="Enter city name">
+        <button onclick="getWeather()">Get Weather</button>
+
+        <div id="loading">
+            <div class="spinner"></div>
+        </div>
+
+        <img id="weather-icon" class="weather-icon" alt="Weather Icon" style="display: none;">
+        <h2 id="weather-header">Weather Information</h2>
+        <p id="weather-description"></p>
+        <p id="temperature"></p>
+        <p id="humidity"></p>
+        <p id="rain-chances"></p>
+        <p id="error-message"></p>
+    </div>
+
+    <script>
+        function getWeather() {
+            const apiKey = '8eaa52d58bb955b72cc8e5112a4fc784'; // Replace with your OpenWeatherMap API key
+            const locationInput = document.getElementById('location');
+            const location = locationInput.value;
+
+            // Show the loading spinner
+            document.getElementById('loading').style.display = 'block';
+
+            // Hide previous data
+            document.getElementById('weather-header').classList.remove('visible');
+            document.getElementById('weather-description').classList.remove('visible');
+            document.getElementById('temperature').classList.remove('visible');
+            document.getElementById('humidity').classList.remove('visible');
+            document.getElementById('rain-chances').classList.remove('visible');
+            document.getElementById('weather-icon').style.display = 'none';
+            
+            fetch(`https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${apiKey}&units=metric`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const weatherDescription = data.weather[0].description;
+                    const temperature = data.main.temp;
+                    const humidity = data.main.humidity;
+                    const rainChances = data.rain ? `Rain Chances: ${data.rain['1h']}mm` : 'No Rain';
+                    const weatherIcon = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+
+                    // Display the weather icon
+                    const weatherIconElement = document.getElementById('weather-icon');
+                    weatherIconElement.src = weatherIcon;
+                    weatherIconElement.style.display = 'block';
+
+                    // Update weather details
+                    document.getElementById('weather-description').innerText = `Weather: ${weatherDescription}`;
+                    document.getElementById('temperature').innerText = `Temperature: ${temperature}°C`;
+                    document.getElementById('humidity').innerText = `Humidity: ${humidity}%`;
+                    document.getElementById('rain-chances').innerText = rainChances;
+
+                    // Clear any previous error messages
+                    document.getElementById('error-message').innerText = '';
+
+                    // Show the weather information with smooth transitions
+                    document.getElementById('weather-header').classList.add('visible');
+                    document.getElementById('weather-description').classList.add('visible');
+                    document.getElementById('temperature').classList.add('visible');
+                    document.getElementById('humidity').classList.add('visible');
+                    document.getElementById('rain-chances').classList.add('visible');
+
+                    // Hide the loading spinner
+                    document.getElementById('loading').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error fetching weather data:', error);
+                    document.getElementById('error-message').innerText = `Error fetching weather data: ${error.message}`;
+
+                    // Hide the loading spinner
+                    document.getElementById('loading').style.display = 'none';
+                });
+        }
+    </script>
+</body>
+</html>
